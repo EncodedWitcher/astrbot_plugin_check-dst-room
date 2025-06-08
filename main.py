@@ -75,11 +75,11 @@ class MyPlugin(Star):
                                     if response.status == 200:
                                         try:
                                             compressed_data = await response.read()
-                                            print("1")
+                                            logger.info("1")
                                             decompressed_data = gzip.decompress(compressed_data)
-                                            print("2")
+                                            logger.info("2")
                                             servers_data = json.loads(decompressed_data)
-                                            print("3")
+                                            logger.info("3")
                                             room_list = servers_data.get("GET", [])
                                             #room_list_len = len(room_list)
                                             for idx, room in enumerate(room_list, 1):
