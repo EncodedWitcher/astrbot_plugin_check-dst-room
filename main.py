@@ -16,7 +16,7 @@ from typing import List, Any
     "astrbot_plugin_check-dst-room",
     "EncodedWitcher",
     "提供饥荒服务器大厅查询的插件",
-    "1.0.4")
+    "1.0.5")
 class MyPlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig):
         super().__init__(context)
@@ -26,7 +26,8 @@ class MyPlugin(Star):
         self.region = self.region_default
         self.region_list=["us-east-1","eu-central-1","ap-southeast-1","ap-east-1"]
         self.platform = "Steam"
-         #get请求
+        self.matched_rooms = []
+
 
 
     async def initialize(self):
@@ -50,14 +51,15 @@ class MyPlugin(Star):
             yield event.plain_result("请输入需要查询的房间关键字\n"+
                                      "可选参数:地区(用空格隔开)\n"+
                                      "如:查房 111 ap-east-1\n"+
-                                     "地区列表:ap-east-1(默认),us-east-1,eu-central-1,ap-southeast-1")
+                                     "地区列表:ap-east-1(默认),us-east-1,eu-central-1,ap-southeast-1\n"
+                                     "输入退出即可退出查询")
 
             @session_waiter(timeout=30, record_history_chains=False)
             async def waiter(controller: SessionController, event: AstrMessageEvent):
                 room_check=event.message_str.split(' ')
                 message_result = event.make_result()
                 chain=[]
-                matched_rooms = []
+
                 if len(room_check)==2 or len(room_check)==3:
                     check_mode=room_check[0]
                     room_keyword=room_check[1]
@@ -83,9 +85,10 @@ class MyPlugin(Star):
 
                                             room_list = servers_data.get("GET", [])
                                             #room_list_len = len(room_list)
+                                            self.matched_rooms = []
                                             for idx, room in enumerate(room_list, 1):
                                                 if room_keyword.lower() in room["name"].lower():
-                                                    matched_rooms.append({
+                                                    self.matched_rooms.append({
                                                         "id": idx,
                                                         "name": room["name"],
                                                         "rowId": room["__rowId"],
@@ -102,7 +105,7 @@ class MyPlugin(Star):
                                             mode_map = {
                                                 "endless": "无尽", "survival": "生存", "wilderness": "荒野", "lightsout": "永夜","relaxed": "休闲"
                                             }
-                                            for room in matched_rooms:
+                                            for room in self.matched_rooms:
                                                 chain.append(Comp.Plain(f"{room['id']}. {room['name']}"
                                                                         f"({room['connected']}/{room['maxconnections']})"
                                                                         f"{season_map.get(room['season'], room['season'])}"
@@ -140,7 +143,7 @@ class MyPlugin(Star):
                         room_region = self.region
                         url=f"https://lobby-v2-{room_region}.klei.com/lobby/read" #post方法
                         #token="pds-g^KU_XjTVZdYQ^uvwqLfAY/Gim/7vJONmsxtxtrt4lnFJB0B1xVI09Ti8="
-                        row_id = next((room['rowId'] for room in matched_rooms if room['id'] == room_id), None)
+                        row_id = next((room['rowId'] for room in self.matched_rooms if room['id'] == room_id), None)
                         payload = {
                             "__token": "pds-g^KU_XjTVZdYQ^uvwqLfAY/Gim/7vJONmsxtxtrt4lnFJB0B1xVI09Ti8=",
                             "__gameID": "DST",
@@ -213,6 +216,8 @@ class MyPlugin(Star):
                             else:
                                 # 处理请求失败的情况
                                 chain.append(Comp.Plain(f"查询失败，服务器状态码: {response.status}"))
+                    elif check_mode == "退出":
+                        controller.stop()
                     else:
                         chain = [Comp.Plain("输入错误")]
                         message_result.chain = chain
@@ -226,7 +231,8 @@ class MyPlugin(Star):
 
                 message_result.chain = chain
                 await event.send(message_result)
-                controller.stop()
+                controller.keep(timeout=30, reset_timeout=True)
+                #controller.stop()
 
             try:
                 await waiter(event)
