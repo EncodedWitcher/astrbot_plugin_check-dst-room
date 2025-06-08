@@ -16,7 +16,7 @@ from typing import List, Any
     "astrbot_plugin_check-dst-room",
     "EncodedWitcher",
     "提供饥荒服务器大厅查询的插件",
-    "1.0.5")
+    "1.0.6")
 class MyPlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig):
         super().__init__(context)
@@ -58,9 +58,8 @@ class MyPlugin(Star):
             async def waiter(controller: SessionController, event: AstrMessageEvent):
                 room_check=event.message_str.split(' ')
                 message_result = event.make_result()
-                chain=[]
 
-                if len(room_check)==2 or len(room_check)==3:
+                if len(room_check)==1 or len(room_check)==2 or len(room_check)==3:
                     check_mode=room_check[0]
                     room_keyword=room_check[1]
                     if check_mode == "查房" :
@@ -97,8 +96,8 @@ class MyPlugin(Star):
                                                         "season": room["season"],
                                                         "mode": room["intent"]
                                                     })
-                                            chain.append(Comp.Plain("输入详情+编号查看详情:\n"))
-                                            chain.append(Comp.Plain("如:详情 1\n"))
+                                            message_result.chain.append(Comp.Plain("输入详情+编号查看详情\n"))
+                                            message_result.chain.append(Comp.Plain("如:详情 1\n"))
                                             season_map = {
                                                 "spring": "春天", "summer": "夏天", "autumn": "秋天", "winter": "冬天"
                                             }
@@ -106,7 +105,7 @@ class MyPlugin(Star):
                                                 "endless": "无尽", "survival": "生存", "wilderness": "荒野", "lightsout": "永夜","relaxed": "休闲"
                                             }
                                             for room in self.matched_rooms:
-                                                chain.append(Comp.Plain(f"{room['id']}. {room['name']}"
+                                                message_result.chain.append(Comp.Plain(f"{room['id']}. {room['name']}"
                                                                         f"({room['connected']}/{room['maxconnections']})"
                                                                         f"{season_map.get(room['season'], room['season'])}"
                                                                         f"({mode_map.get(room['mode'], room['mode'])})\n"))
@@ -115,29 +114,30 @@ class MyPlugin(Star):
                                             # 捕获所有可能的数据处理错误
                                             self.region = self.region_default
                                             # 向用户报告一个更友好的错误信息
-                                            chain = [Comp.Plain(
+                                            message_result.chain = [Comp.Plain(
                                                 f"处理服务器数据时出错，请稍后再试。错误: {type(e).__name__}")]
-                                            message_result.chain = chain
-                                            await event.send(message_result)
+                                            #message_result.chain = chain
+                                            #await event.send(message_result)
                                             controller.stop()
                                     else:
                                         self.region = self.region_default
-                                        chain=[Comp.Plain(f"获取服务器列表失败，状态码: {response.status}")]
-                                        message_result.chain = chain
-                                        await event.send(message_result)
+                                        message_result.chain=[Comp.Plain(f"获取服务器列表失败，状态码: {response.status}")]
+                                        #message_result.chain = chain
+                                        #await event.send(message_result)
                                         controller.stop()
                             except aiohttp.ClientError as e:
                                 # 捕获所有可能的网络连接错误
                                 self.region = self.region_default
-                                chain = [Comp.Plain(f"无法连接到服务器，请检查网络或稍后再试。错误: {type(e).__name__}")]
-                                message_result.chain = chain
-                                await event.send(message_result)
+                                message_result.chain = [Comp.Plain(f"无法连接到服务器，请检查网络或稍后再试。错误: {type(e).__name__}")]
+                                #message_result.chain = chain
+                                #await event.send(message_result)
                                 controller.stop()
                         else:
-                            chain = [Comp.Plain("参数错误")]
-                            message_result.chain = chain
-                            await event.send(message_result)
+                            message_result.chain = [Comp.Plain("参数错误")]
+                            #message_result.chain = chain
+                            #await event.send(message_result)
                             controller.stop()
+
                     elif check_mode == "详情" :
                         room_id = room_check[1]
                         room_region = self.region
@@ -159,8 +159,8 @@ class MyPlugin(Star):
 
                                     # 安全地检查 "GET" 列表是否为空
                                     if not room_data.get("GET"):
-                                        chain.append(Comp.Plain("错误：服务器返回的数据中没有房间信息。"))
-                                        message_result.chain = chain
+                                        message_result.chain.append(Comp.Plain("错误：服务器返回的数据中没有房间信息。"))
+                                        #message_result.chain = chain
                                         await event.send(message_result)
                                         controller.stop()
 
@@ -201,7 +201,7 @@ class MyPlugin(Star):
 
 
                                     # --- 构建更丰富的输出 ---
-                                    chain.append(Comp.Plain(
+                                    message_result.chain.append(Comp.Plain(
                                         f"🚪 房间名: {room_name}\n"
                                         f"👥 人数: {connected_players} / {max_players}\n"
                                         f"☀️ 天数: {day_info} ({season_map.get(season, season)})\n"
@@ -212,24 +212,16 @@ class MyPlugin(Star):
 
                                 except Exception as e:
                                     # 捕获可能的JSON解析错误或其他异常
-                                    chain.append(Comp.Plain(f"处理房间数据时出错: {e}"))
+                                    message_result.chain.append(Comp.Plain(f"处理房间数据时出错: {e}"))
                             else:
                                 # 处理请求失败的情况
-                                chain.append(Comp.Plain(f"查询失败，服务器状态码: {response.status}"))
-                    elif check_mode == "退出":
-                        controller.stop()
-                    else:
-                        chain = [Comp.Plain("输入错误")]
-                        message_result.chain = chain
-                        await event.send(message_result)
-                        controller.stop()
-                else:
-                    chain = [Comp.Plain("输入错误")]
-                    message_result.chain=chain
-                    await event.send(message_result)
-                    controller.stop()
+                                message_result.chain.append(Comp.Plain(f"查询失败，服务器状态码: {response.status}"))
 
-                message_result.chain = chain
+                    elif check_mode == "退出":
+                        message_result.chain=[Comp.Plain("退出查房")]
+                        controller.stop()
+
+                #message_result.chain = chain
                 await event.send(message_result)
                 controller.keep(timeout=30, reset_timeout=True)
                 #controller.stop()
