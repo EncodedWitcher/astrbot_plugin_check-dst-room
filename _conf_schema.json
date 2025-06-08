@@ -1,0 +1,9 @@
+{
+  "region": {
+    "description": "默认地区选择",
+    "type": "string",
+    "hint": "在查房时默认选择的地区,默认为亚太地区东",
+    "options": ["us-east-1","eu-central-1","ap-southeast-1","ap-east-1"],
+    "default": "ap-east-1"
+  }
+}
