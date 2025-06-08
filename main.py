@@ -16,7 +16,7 @@ from typing import List, Any
     "astrbot_plugin_check-dst-room",
     "EncodedWitcher",
     "提供饥荒服务器大厅查询的插件",
-    "1.0.0")
+    "1.0.1")
 class MyPlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig):
         super().__init__(context)
@@ -222,6 +222,16 @@ class MyPlugin(Star):
 
                 message_result.chain = chain
                 await event.send(message_result)
+                controller.stop()
+
+            try:
+                await waiter(event)
+            except TimeoutError as _:  # 当超时后，会话控制器会抛出 TimeoutError
+                yield event.plain_result("查房超时")
+            except Exception as e:
+                yield event.plain_result("发生错误，请联系管理员: " + str(e))
+            finally:
+                event.stop_event()
 
         except Exception as e:
             logger.error("check-dst-room error: " + str(e))
