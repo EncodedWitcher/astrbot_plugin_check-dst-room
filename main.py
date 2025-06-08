@@ -16,7 +16,7 @@ from typing import List, Any
     "astrbot_plugin_check-dst-room",
     "EncodedWitcher",
     "提供饥荒服务器大厅查询的插件",
-    "1.0.6")
+    "1.0.7")
 class MyPlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig):
         super().__init__(context)
@@ -59,7 +59,7 @@ class MyPlugin(Star):
                 room_check=event.message_str.split(' ')
                 message_result = event.make_result()
 
-                if len(room_check)==1 or len(room_check)==2 or len(room_check)==3:
+                if len(room_check)==2 or len(room_check)==3:
                     check_mode=room_check[0]
                     room_keyword=room_check[1]
                     if check_mode == "查房" :
@@ -96,8 +96,10 @@ class MyPlugin(Star):
                                                         "season": room["season"],
                                                         "mode": room["intent"]
                                                     })
-                                            message_result.chain.append(Comp.Plain("输入详情+编号查看详情\n"))
-                                            message_result.chain.append(Comp.Plain("如:详情 1\n"))
+                                            message_result.chain.append(Comp.Plain("输入详情+编号查看详情"))
+                                            message_result.chain.append(Comp.Plain("\n"))
+                                            message_result.chain.append(Comp.Plain("如:详情 1"))
+                                            message_result.chain.append(Comp.Plain("\n"))
                                             season_map = {
                                                 "spring": "春天", "summer": "夏天", "autumn": "秋天", "winter": "冬天"
                                             }
@@ -108,7 +110,8 @@ class MyPlugin(Star):
                                                 message_result.chain.append(Comp.Plain(f"{room['id']}. {room['name']}"
                                                                         f"({room['connected']}/{room['maxconnections']})"
                                                                         f"{season_map.get(room['season'], room['season'])}"
-                                                                        f"({mode_map.get(room['mode'], room['mode'])})\n"))
+                                                                        f"({mode_map.get(room['mode'], room['mode'])})"))
+                                                message_result.chain.append(Comp.Plain("\n"))
 
                                         except (gzip.BadGzipFile, json.JSONDecodeError, KeyError) as e:
                                             # 捕获所有可能的数据处理错误
@@ -200,15 +203,20 @@ class MyPlugin(Star):
                                     direct_connect_code = f"c_connect(\"{ip}\",\"{port}\") 启用密码:{has_password}"
 
 
-                                    # --- 构建更丰富的输出 ---
-                                    message_result.chain.append(Comp.Plain(
-                                        f"🚪 房间名: {room_name}\n"
-                                        f"👥 人数: {connected_players} / {max_players}\n"
-                                        f"☀️ 天数: {day_info} ({season_map.get(season, season)})\n"
-                                        f"👤 在线玩家: {players_str}"
-                                        f"🧩 模组列表: {parsed_mods}"
-                                        f"🔑 直连代码: {direct_connect_code}"
-                                    ))
+                                    # --- 构建输出 ---
+                                    message_result.chain.append(Comp.Plain(f"🚪 房间名: {room_name}"))
+                                    message_result.chain.append(Comp.Plain("\n"))
+                                    message_result.chain.append(Comp.Plain(f"👥 人数: {connected_players} / {max_players}"))
+                                    message_result.chain.append(Comp.Plain("\n"))
+                                    message_result.chain.append(Comp.Plain(f"☀️ 天数: {day_info} ({season_map.get(season, season)})"))
+                                    message_result.chain.append(Comp.Plain("\n"))
+                                    message_result.chain.append(Comp.Plain(f"👤 在线玩家: {players_str}"))
+                                    message_result.chain.append(Comp.Plain("\n"))
+                                    message_result.chain.append(Comp.Plain(f"🧩 模组列表: {parsed_mods}"))
+                                    message_result.chain.append(Comp.Plain("\n"))
+                                    message_result.chain.append(Comp.Plain(f"🔑 直连代码: {direct_connect_code}"))
+
+
 
                                 except Exception as e:
                                     # 捕获可能的JSON解析错误或其他异常
@@ -217,7 +225,9 @@ class MyPlugin(Star):
                                 # 处理请求失败的情况
                                 message_result.chain.append(Comp.Plain(f"查询失败，服务器状态码: {response.status}"))
 
-                    elif check_mode == "退出":
+
+                elif len(room_check)== 1:
+                    if room_check[0] == "退出":
                         message_result.chain=[Comp.Plain("退出查房")]
                         controller.stop()
 
