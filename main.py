@@ -16,7 +16,7 @@ from typing import List, Any
     "astrbot_plugin_check-dst-room",
     "EncodedWitcher",
     "提供饥荒服务器大厅查询的插件",
-    "1.0.1")
+    "1.0.4")
 class MyPlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig):
         super().__init__(context)
@@ -75,11 +75,12 @@ class MyPlugin(Star):
                                     if response.status == 200:
                                         try:
                                             compressed_data = await response.read()
-                                            logger.info("1")
-                                            decompressed_data = gzip.decompress(compressed_data)
-                                            logger.info("2")
-                                            servers_data = json.loads(decompressed_data)
-                                            logger.info("3")
+
+                                            #decompressed_data = gzip.decompress(compressed_data)
+
+                                            #servers_data = json.loads(decompressed_data)
+                                            servers_data = json.loads(compressed_data)
+
                                             room_list = servers_data.get("GET", [])
                                             #room_list_len = len(room_list)
                                             for idx, room in enumerate(room_list, 1):
