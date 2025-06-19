@@ -189,17 +189,17 @@ class MyPlugin(Star):
 
                                     # --- 构建输出 ---
                                     content=(Comp.Plain(f"🚪 房间名: {room_name}"))
-                                    nodes.append(content_to_node(uin, content))
+                                    nodes.nodes.append(content_to_node(uin, content))
                                     content=(Comp.Plain(f"👥 人数: {connected_players} / {max_players}"))
-                                    nodes.append(content_to_node(uin, content))
+                                    nodes.nodes.append(content_to_node(uin, content))
                                     content=(Comp.Plain(f"☀️ 天数: {day_info} ({season_map.get(season, season)})"))
-                                    nodes.append(content_to_node(uin,content))
+                                    nodes.nodes.append(content_to_node(uin,content))
                                     content=(Comp.Plain(f"👤 在线玩家: {players_str}"))
-                                    nodes.append(content_to_node(uin,content))
+                                    nodes.nodes.append(content_to_node(uin,content))
                                     content=(Comp.Plain(f"🧩 模组列表: {parsed_mods}"))
-                                    nodes.append(content_to_node(uin,content))
+                                    nodes.nodes.append(content_to_node(uin,content))
                                     content=(Comp.Plain(f"🔑 直连代码: {direct_connect_code}"))
-                                    nodes.append(content_to_node(uin, content))
+                                    nodes.nodes.append(content_to_node(uin, content))
 
 
                                 except Exception as e:
