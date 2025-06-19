@@ -45,7 +45,7 @@ class MyPlugin(Star):
             async def waiter(controller: SessionController, event: AstrMessageEvent):
                 room_check=event.message_str.split(' ')
                 message_result = event.make_result()
-                nodes=[]
+                nodes=Comp.Nodes
                 uin=event.get_self_id()
 
                 if len(room_check)==2 or len(room_check)==3:
