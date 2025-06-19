@@ -45,7 +45,7 @@ class MyPlugin(Star):
             async def waiter(controller: SessionController, event: AstrMessageEvent):
                 room_check=event.message_str.split(' ')
                 message_result = event.make_result()
-                nodes=Comp.Nodes
+                nodes = Comp.Nodes([])
                 uin=event.get_self_id()
 
                 if len(room_check)==2 or len(room_check)==3:
@@ -87,9 +87,9 @@ class MyPlugin(Star):
                                                         "mode": room["intent"]
                                                     })
                                             content=[Comp.Plain(f"输入详情+编号查看详情")]
-                                            nodes.append(content_to_node(uin,content))
+                                            nodes.nodes.append(content_to_node(uin,content))
                                             content=[Comp.Plain(f"如:详情 1")]
-                                            nodes.append(content_to_node(uin, content))
+                                            nodes.nodes.append(content_to_node(uin, content))
                                             season_map = {
                                                 "spring": "春天", "summer": "夏天", "autumn": "秋天", "winter": "冬天"
                                             }
@@ -101,7 +101,7 @@ class MyPlugin(Star):
                                                                      f"({room['connected']}/{room['maxconnections']})"
                                                                      f"{season_map.get(room['season'], room['season'])}"
                                                                      f"({mode_map.get(room['mode'], room['mode'])})")]
-                                                nodes.append(content_to_node(uin, content))
+                                                nodes.nodes.append(content_to_node(uin, content))
 
                                         except (json.JSONDecodeError, KeyError) as e:
                                             self.region = self.region_default
