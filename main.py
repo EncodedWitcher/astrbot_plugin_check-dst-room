@@ -2,7 +2,6 @@ from astrbot.api.event import filter, AstrMessageEvent, MessageEventResult
 from astrbot.api.star import Context, Star, register
 from astrbot.api import logger, AstrBotConfig
 import astrbot.api.message_components as Comp
-#from astrbot.api.message_components import Node, Plain
 from astrbot.core.utils.session_waiter import (
     session_waiter,
     SessionController,
@@ -47,6 +46,7 @@ class MyPlugin(Star):
             async def waiter(controller: SessionController, event: AstrMessageEvent):
                 room_check=event.message_str.split(' ')
                 message_result = event.make_result()
+                content=[]
 
 
                 if len(room_check)==2 or len(room_check)==3:
@@ -86,10 +86,10 @@ class MyPlugin(Star):
                                                         "season": room["season"],
                                                         "mode": room["intent"]
                                                     })
-                                            message_result.chain.append(Comp.Plain(f"输入详情+编号查看详情"))
-                                            message_result.chain.append(Comp.Plain(f"\n"))
-                                            message_result.chain.append(Comp.Plain(f"如:详情 1"))
-                                            message_result.chain.append(Comp.Plain(f"\n"))
+                                            content.append(Comp.Plain(f"输入详情+编号查看详情"))
+                                            content.append(Comp.Plain(f"\n"))
+                                            content.append(Comp.Plain(f"如:详情 1"))
+                                            content.append(Comp.Plain(f"\n"))
                                             season_map = {
                                                 "spring": "春天", "summer": "夏天", "autumn": "秋天", "winter": "冬天"
                                             }
@@ -97,36 +97,36 @@ class MyPlugin(Star):
                                                 "endless": "无尽", "survival": "生存", "wilderness": "荒野", "lightsout": "永夜","relaxed": "休闲"
                                             }
                                             for room in self.matched_rooms:
-                                                message_result.chain.append(Comp.Plain(f"{room['id']}. {room['name']}"
+                                                content.append(Comp.Plain(f"{room['id']}. {room['name']}"
                                                                         f"({room['connected']}/{room['maxconnections']})"
                                                                         f"{season_map.get(room['season'], room['season'])}"
                                                                         f"({mode_map.get(room['mode'], room['mode'])})"))
-                                                message_result.chain.append(Comp.Plain(f"\n"))
+                                                content.append(Comp.Plain(f"\n"))
 
                                         except (gzip.BadGzipFile, json.JSONDecodeError, KeyError) as e:
                                             # 捕获所有可能的数据处理错误
                                             self.region = self.region_default
                                             # 向用户报告一个更友好的错误信息
-                                            message_result.chain = [Comp.Plain(
+                                            content = [Comp.Plain(
                                                 f"处理服务器数据时出错，请稍后再试。错误: {type(e).__name__}")]
                                             #message_result.chain = chain
                                             #await event.send(message_result)
                                             controller.stop()
                                     else:
                                         self.region = self.region_default
-                                        message_result.chain=[Comp.Plain(f"获取服务器列表失败，状态码: {response.status}")]
+                                        content=[Comp.Plain(f"获取服务器列表失败，状态码: {response.status}")]
                                         #message_result.chain = chain
                                         #await event.send(message_result)
                                         controller.stop()
                             except aiohttp.ClientError as e:
                                 # 捕获所有可能的网络连接错误
                                 self.region = self.region_default
-                                message_result.chain = [Comp.Plain(f"无法连接到服务器，请检查网络或稍后再试。错误: {type(e).__name__}")]
+                                content = [Comp.Plain(f"无法连接到服务器，请检查网络或稍后再试。错误: {type(e).__name__}")]
                                 #message_result.chain = chain
                                 #await event.send(message_result)
                                 controller.stop()
                         else:
-                            message_result.chain = [Comp.Plain(f"参数错误")]
+                            content = [Comp.Plain(f"参数错误")]
                             #message_result.chain = chain
                             #await event.send(message_result)
                             controller.stop()
@@ -152,7 +152,7 @@ class MyPlugin(Star):
 
                                     # 安全地检查 "GET" 列表是否为空
                                     if not room_data.get("GET"):
-                                        message_result.chain.append(Comp.Plain(f"错误：服务器返回的数据中没有房间信息。"))
+                                        content.append(Comp.Plain(f"错误：服务器返回的数据中没有房间信息。"))
                                         #message_result.chain = chain
                                         await event.send(message_result)
                                         controller.stop()
@@ -194,34 +194,40 @@ class MyPlugin(Star):
 
 
                                     # --- 构建输出 ---
-                                    message_result.chain.append(Comp.Plain(f"🚪 房间名: {room_name}"))
-                                    message_result.chain.append(Comp.Plain(f"\n"))
-                                    message_result.chain.append(Comp.Plain(f"👥 人数: {connected_players} / {max_players}"))
-                                    message_result.chain.append(Comp.Plain(f"\n"))
-                                    message_result.chain.append(Comp.Plain(f"☀️ 天数: {day_info} ({season_map.get(season, season)})"))
-                                    message_result.chain.append(Comp.Plain(f"\n"))
-                                    message_result.chain.append(Comp.Plain(f"👤 在线玩家: {players_str}"))
-                                    message_result.chain.append(Comp.Plain(f"\n"))
-                                    message_result.chain.append(Comp.Plain(f"🧩 模组列表: {parsed_mods}"))
-                                    message_result.chain.append(Comp.Plain(f"\n"))
-                                    message_result.chain.append(Comp.Plain(f"🔑 直连代码: {direct_connect_code}"))
+                                    content.append(Comp.Plain(f"🚪 房间名: {room_name}"))
+                                    content.append(Comp.Plain(f"\n"))
+                                    content.append(Comp.Plain(f"👥 人数: {connected_players} / {max_players}"))
+                                    content.append(Comp.Plain(f"\n"))
+                                    content.append(Comp.Plain(f"☀️ 天数: {day_info} ({season_map.get(season, season)})"))
+                                    content.append(Comp.Plain(f"\n"))
+                                    content.append(Comp.Plain(f"👤 在线玩家: {players_str}"))
+                                    content.append(Comp.Plain(f"\n"))
+                                    content.append(Comp.Plain(f"🧩 模组列表: {parsed_mods}"))
+                                    content.append(Comp.Plain(f"\n"))
+                                    content.append(Comp.Plain(f"🔑 直连代码: {direct_connect_code}"))
 
 
 
                                 except Exception as e:
                                     # 捕获可能的JSON解析错误或其他异常
-                                    message_result.chain.append(Comp.Plain(f"处理房间数据时出错: {e}"))
+                                    content.append(Comp.Plain(f"处理房间数据时出错: {e}"))
                             else:
                                 # 处理请求失败的情况
-                                message_result.chain.append(Comp.Plain(f"查询失败，服务器状态码: {response.status},row_id={row_id}"))
+                                content.append(Comp.Plain(f"查询失败，服务器状态码: {response.status},row_id={row_id}"))
 
 
                 elif len(room_check)== 1:
                     if room_check[0] == "退出":
-                        message_result.chain=[Comp.Plain("退出查房")]
+                        content=[Comp.Plain("退出查房")]
                         controller.stop()
 
                 #message_result.chain = chain
+                node=Comp.Node(
+                    uin=event.get_self_id(),
+                    name="饥荒大厅",
+                    content=content
+                )
+                message_result.chain=[node]
                 await event.send(message_result)
                 controller.keep(timeout=30, reset_timeout=True)
                 #controller.stop()
