@@ -2,6 +2,7 @@ from astrbot.api.event import filter, AstrMessageEvent, MessageEventResult
 from astrbot.api.star import Context, Star, register
 from astrbot.api import logger, AstrBotConfig
 import astrbot.api.message_components as Comp
+#from astrbot.api.message_components import Node, Plain
 from astrbot.core.utils.session_waiter import (
     session_waiter,
     SessionController,
@@ -16,7 +17,7 @@ from typing import List, Any
     "astrbot_plugin_check-dst-room",
     "EncodedWitcher",
     "提供饥荒服务器大厅查询的插件",
-    "1.0.7")
+    "1.0.8")
 class MyPlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig):
         super().__init__(context)
@@ -28,21 +29,9 @@ class MyPlugin(Star):
         self.platform = "Steam"
         self.matched_rooms = []
 
-
-
     async def initialize(self):
         self.session = aiohttp.ClientSession()
         """可选择实现异步的插件初始化方法，当实例化该插件类之后会自动调用该方法。"""
-    
-    # 注册指令的装饰器。指令名为 helloworld。注册成功后，发送 `/helloworld` 就会触发这个指令，并回复 `你好, {user_name}!`
-    @filter.command("helloworld")
-    async def helloworld(self, event: AstrMessageEvent):
-        """这是一个 hello world 指令""" # 这是 handler 的描述，将会被解析方便用户了解插件内容。建议填写。
-        user_name = event.get_sender_name()
-        message_str = event.message_str # 用户发的纯文本消息字符串
-        message_chain = event.get_messages() # 用户所发的消息的消息链 # from astrbot.api.message_components import *
-        logger.info(message_chain)
-        yield event.plain_result(f"Hello, {user_name}, 你发了 {message_str}!") # 发送一条纯文本消息
 
     @filter.command("查房")
     async def check_room(self, event: AstrMessageEvent):
@@ -58,6 +47,7 @@ class MyPlugin(Star):
             async def waiter(controller: SessionController, event: AstrMessageEvent):
                 room_check=event.message_str.split(' ')
                 message_result = event.make_result()
+
 
                 if len(room_check)==2 or len(room_check)==3:
                     check_mode=room_check[0]
@@ -96,10 +86,10 @@ class MyPlugin(Star):
                                                         "season": room["season"],
                                                         "mode": room["intent"]
                                                     })
-                                            message_result.chain.append(Comp.Plain("输入详情+编号查看详情"))
-                                            message_result.chain.append(Comp.Plain("\n"))
-                                            message_result.chain.append(Comp.Plain("如:详情 1"))
-                                            message_result.chain.append(Comp.Plain("\n"))
+                                            message_result.chain.append(Comp.Plain(f"输入详情+编号查看详情"))
+                                            message_result.chain.append(Comp.Plain(f"\n"))
+                                            message_result.chain.append(Comp.Plain(f"如:详情 1"))
+                                            message_result.chain.append(Comp.Plain(f"\n"))
                                             season_map = {
                                                 "spring": "春天", "summer": "夏天", "autumn": "秋天", "winter": "冬天"
                                             }
@@ -111,7 +101,7 @@ class MyPlugin(Star):
                                                                         f"({room['connected']}/{room['maxconnections']})"
                                                                         f"{season_map.get(room['season'], room['season'])}"
                                                                         f"({mode_map.get(room['mode'], room['mode'])})"))
-                                                message_result.chain.append(Comp.Plain("\n"))
+                                                message_result.chain.append(Comp.Plain(f"\n"))
 
                                         except (gzip.BadGzipFile, json.JSONDecodeError, KeyError) as e:
                                             # 捕获所有可能的数据处理错误
@@ -136,7 +126,7 @@ class MyPlugin(Star):
                                 #await event.send(message_result)
                                 controller.stop()
                         else:
-                            message_result.chain = [Comp.Plain("参数错误")]
+                            message_result.chain = [Comp.Plain(f"参数错误")]
                             #message_result.chain = chain
                             #await event.send(message_result)
                             controller.stop()
@@ -162,7 +152,7 @@ class MyPlugin(Star):
 
                                     # 安全地检查 "GET" 列表是否为空
                                     if not room_data.get("GET"):
-                                        message_result.chain.append(Comp.Plain("错误：服务器返回的数据中没有房间信息。"))
+                                        message_result.chain.append(Comp.Plain(f"错误：服务器返回的数据中没有房间信息。"))
                                         #message_result.chain = chain
                                         await event.send(message_result)
                                         controller.stop()
@@ -205,15 +195,15 @@ class MyPlugin(Star):
 
                                     # --- 构建输出 ---
                                     message_result.chain.append(Comp.Plain(f"🚪 房间名: {room_name}"))
-                                    message_result.chain.append(Comp.Plain("\n"))
+                                    message_result.chain.append(Comp.Plain(f"\n"))
                                     message_result.chain.append(Comp.Plain(f"👥 人数: {connected_players} / {max_players}"))
-                                    message_result.chain.append(Comp.Plain("\n"))
+                                    message_result.chain.append(Comp.Plain(f"\n"))
                                     message_result.chain.append(Comp.Plain(f"☀️ 天数: {day_info} ({season_map.get(season, season)})"))
-                                    message_result.chain.append(Comp.Plain("\n"))
+                                    message_result.chain.append(Comp.Plain(f"\n"))
                                     message_result.chain.append(Comp.Plain(f"👤 在线玩家: {players_str}"))
-                                    message_result.chain.append(Comp.Plain("\n"))
+                                    message_result.chain.append(Comp.Plain(f"\n"))
                                     message_result.chain.append(Comp.Plain(f"🧩 模组列表: {parsed_mods}"))
-                                    message_result.chain.append(Comp.Plain("\n"))
+                                    message_result.chain.append(Comp.Plain(f"\n"))
                                     message_result.chain.append(Comp.Plain(f"🔑 直连代码: {direct_connect_code}"))
 
 
@@ -223,7 +213,7 @@ class MyPlugin(Star):
                                     message_result.chain.append(Comp.Plain(f"处理房间数据时出错: {e}"))
                             else:
                                 # 处理请求失败的情况
-                                message_result.chain.append(Comp.Plain(f"查询失败，服务器状态码: {response.status}"))
+                                message_result.chain.append(Comp.Plain(f"查询失败，服务器状态码: {response.status},row_id={row_id}"))
 
 
                 elif len(room_check)== 1:
@@ -239,7 +229,7 @@ class MyPlugin(Star):
             try:
                 await waiter(event)
             except TimeoutError as _:  # 当超时后，会话控制器会抛出 TimeoutError
-                yield event.plain_result("查房超时")
+                yield event.plain_result("查房超时已自动退出")
             except Exception as e:
                 yield event.plain_result("发生错误，请联系管理员: " + str(e))
             finally:
