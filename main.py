@@ -222,7 +222,7 @@ class MyPlugin(Star):
                         message_result=content
                         controller.stop()
 
-                message_result.chain=nodes
+                message_result.chain=[nodes]
                 await event.send(message_result)
                 controller.keep(timeout=180, reset_timeout=True)
                 #controller.stop()
