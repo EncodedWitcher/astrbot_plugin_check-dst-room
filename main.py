@@ -204,15 +204,15 @@ class MyPlugin(Star):
 
                                 except Exception as e:
                                     # 捕获可能的JSON解析错误或其他异常
-                                    content=(Comp.Plain(f"处理房间数据时出错: {e}"))
-                                    nodes = [content_to_node(uin, content)]
-                                    message_result.chain = nodes
+                                    content=[(Comp.Plain(f"处理房间数据时出错: {e}"))]
+
+                                    message_result.chain = content
                                     controller.stop()
                             else:
                                 # 处理请求失败的情况
-                                content=(Comp.Plain(f"查询失败，服务器状态码: {response.status},row_id={row_id}"))
-                                nodes = [content_to_node(uin, content)]
-                                message_result.chain = nodes
+                                content=[(Comp.Plain(f"查询失败，服务器状态码: {response.status},row_id={row_id}"))]
+
+                                message_result.chain = content
                                 controller.stop()
 
 
