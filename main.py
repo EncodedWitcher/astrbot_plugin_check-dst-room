@@ -109,20 +109,20 @@ class MyPlugin(Star):
                                     else:
                                         self.region = self.region_default
                                         content=[Comp.Plain(f"获取服务器列表失败，状态码: {response.status}")]
-                                        nodes=[content_to_node(uin,content)]
-                                        message_result.chain = nodes
+
+                                        message_result.chain = content
                                         controller.stop()
                             except aiohttp.ClientError as e:
                                 # 捕获所有可能的网络连接错误
                                 self.region = self.region_default
                                 content = [Comp.Plain(f"无法连接到服务器，请检查网络或稍后再试。错误: {type(e).__name__}")]
-                                nodes = [content_to_node(uin, content)]
-                                message_result.chain = nodes
+
+                                message_result.chain = content
                                 controller.stop()
                         else:
                             content = [Comp.Plain(f"参数错误")]
-                            nodes = [content_to_node(uin, content)]
-                            message_result.chain = nodes
+
+                            message_result.chain = content
                             controller.stop()
 
                     elif check_mode == "详情" :
@@ -146,9 +146,9 @@ class MyPlugin(Star):
 
                                     # 安全地检查 "GET" 列表是否为空
                                     if not room_data.get("GET"):
-                                        content=(Comp.Plain(f"错误：服务器返回的数据中没有房间信息。"))
-                                        nodes = [content_to_node(uin, content)]
-                                        message_result.chain = nodes
+                                        content=[(Comp.Plain(f"错误：服务器返回的数据中没有房间信息。"))]
+
+                                        message_result.chain = content
                                         controller.stop()
 
                                     room_info = room_data["GET"][0]
