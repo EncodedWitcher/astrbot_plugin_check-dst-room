@@ -126,7 +126,14 @@ class MyPlugin(Star):
                             controller.stop()
 
                     elif check_mode == "详情" :
-                        room_id = room_check[1]
+
+                        try:
+                            room_id = int(room_check[1])  # 将 room_id 转换为整数
+                        except ValueError:
+                            content = [Comp.Plain("房间编号请输入数字。")]
+                            message_result.chain = content
+                            controller.stop()
+
                         room_region = self.region
                         url=f"https://lobby-v2-{room_region}.klei.com/lobby/read" #post方法
                         #token="pds-g^KU_XjTVZdYQ^uvwqLfAY/Gim/7vJONmsxtxtrt4lnFJB0B1xVI09Ti8="
@@ -147,7 +154,6 @@ class MyPlugin(Star):
                                     # 安全地检查 "GET" 列表是否为空
                                     if not room_data.get("GET"):
                                         content=[(Comp.Plain(f"错误：服务器返回的数据中没有房间信息。"))]
-
                                         message_result.chain = content
                                         controller.stop()
 
@@ -258,8 +264,10 @@ def parse_day_from_data(data_string: str) -> str:
     match = re.search(r"day=(\d+)", data_string)
     match1 = re.search(r"dayselapsedinseason=(\d+)", data_string)
     match2 = re.search(r"daysleftinseason=(\d+)", data_string)
-    now_day = match.group(1)
-    season_days = match1.group(1)+match2.group(1)
+    now_day = int(match.group(1))
+    days_elapsed = int(match1.group(1)) if match1 else 0
+    days_left = int(match2.group(1)) if match2 else 0
+    season_days = days_elapsed + days_left
     if match:
         return f"{now_day}/{season_days}"
     return "未知天数"
