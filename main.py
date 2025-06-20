@@ -37,13 +37,13 @@ class MyPlugin(Star):
         try:
             yield event.plain_result("请输入需要查询的房间关键字\n"+
                                      "可选参数:地区(用空格隔开)\n"+
-                                     "如:查房 111 ap-east-1\n"+
+                                     "如:查 111 ap-east-1\n"+
                                      "地区列表:ap-east-1(默认),us-east-1,eu-central-1,ap-southeast-1\n"
                                      "输入退出即可退出查询")
 
             @session_waiter(timeout=180, record_history_chains=False)
             async def waiter(controller: SessionController, event: AstrMessageEvent):
-                room_check=event.message_str.split('')
+                room_check=event.message_str.split(' ')
                 message_result = event.make_result()
                 nodes = Comp.Nodes([])
                 uin=event.get_self_id()
@@ -52,7 +52,7 @@ class MyPlugin(Star):
                     check_mode=room_check[0]
                     room_keyword=room_check[1]
 
-                    if check_mode == "查房" :
+                    if check_mode == "查" :
                         if len(room_check) == 3:
                             room_region = room_check[2]
                             self.region = room_region
@@ -109,7 +109,6 @@ class MyPlugin(Star):
                                     else:
                                         self.region = self.region_default
                                         content=[Comp.Plain(f"获取服务器列表失败，状态码: {response.status}")]
-
                                         message_result.chain = content
                                         controller.stop()
                             except aiohttp.ClientError as e:
