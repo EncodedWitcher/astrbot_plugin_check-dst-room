@@ -15,7 +15,7 @@ from typing import List, Any
     "astrbot_plugin_check-dst-room",
     "EncodedWitcher",
     "提供饥荒服务器大厅查询的插件",
-    "1.1.5")
+    "1.1.6")
 class MyPlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig):
         super().__init__(context)
@@ -87,9 +87,9 @@ class MyPlugin(Star):
                                                         "mode": room["intent"]
                                                     })
                                             content=[Comp.Plain(f"输入详情+编号查看详情")]
-                                            nodes.nodes.append(content_to_node(uin,content))
+                                            nodes.nodes.append(self.content_to_node(uin,content))
                                             content=[Comp.Plain(f"如:详情 1")]
-                                            nodes.nodes.append(content_to_node(uin, content))
+                                            nodes.nodes.append(self.content_to_node(uin, content))
                                             season_map = {
                                                 "spring": "春天", "summer": "夏天", "autumn": "秋天", "winter": "冬天"
                                             }
@@ -101,7 +101,7 @@ class MyPlugin(Star):
                                                                      f"({room['connected']}/{room['maxconnections']})"
                                                                      f"{season_map.get(room['season'], room['season'])}"
                                                                      f"({mode_map.get(room['mode'], room['mode'])})")]
-                                                nodes.nodes.append(content_to_node(uin, content))
+                                                nodes.nodes.append(self.content_to_node(uin, content))
 
                                         except (json.JSONDecodeError, KeyError) as e:
                                             self.region = self.region_default
@@ -167,7 +167,7 @@ class MyPlugin(Star):
 
                                     # 2. 游戏状态
                                     # 调用辅助函数解析天数
-                                    day_info = parse_day_from_data(room_info.get('data', ''))
+                                    day_info = self.parse_day_from_data(room_info.get('data', ''))
                                     season_map = {
                                         "spring": "春天", "summer": "夏天", "autumn": "秋天", "winter": "冬天"
                                     }
@@ -179,13 +179,13 @@ class MyPlugin(Star):
 
                                     # 4. 玩家列表
                                     # 调用辅助函数解析玩家列表
-                                    players_list = parse_players_from_string(room_info.get('players', ''))
+                                    players_list = self.parse_players_from_string(room_info.get('players', ''))
                                     players_str = ", ".join(players_list) if players_list else "无"
 
                                     # 5. 模组列表
                                     mods_enabled = room_info.get('mods', False)
                                     mods_info_list = room_info.get('mods_info', [])
-                                    parsed_mods = parse_mods_info(mods_enabled, mods_info_list)
+                                    parsed_mods = self.parse_mods_info(mods_enabled, mods_info_list)
 
                                     #6. 直连代码
                                     ip = room_info.get("__addr","未知")
@@ -195,17 +195,17 @@ class MyPlugin(Star):
 
                                     # --- 构建输出 ---
                                     content=[Comp.Plain(f"房间名: {room_name}")]
-                                    nodes.nodes.append(content_to_node(uin, content))
+                                    nodes.nodes.append(self.content_to_node(uin, content))
                                     content=[Comp.Plain(f"人数: {connected_players} / {max_players}")]
-                                    nodes.nodes.append(content_to_node(uin, content))
+                                    nodes.nodes.append(self.content_to_node(uin, content))
                                     content=[Comp.Plain(f"天数: {day_info} ({season_map.get(season, season)})")]
-                                    nodes.nodes.append(content_to_node(uin,content))
+                                    nodes.nodes.append(self.content_to_node(uin,content))
                                     content=[Comp.Plain(f"在线玩家: {players_str}")]
-                                    nodes.nodes.append(content_to_node(uin,content))
+                                    nodes.nodes.append(self.content_to_node(uin,content))
                                     content=[Comp.Plain(f"模组列表: {parsed_mods}")]
-                                    nodes.nodes.append(content_to_node(uin,content))
+                                    nodes.nodes.append(self.content_to_node(uin,content))
                                     content=[Comp.Plain(f"直连代码: {direct_connect_code}")]
-                                    nodes.nodes.append(content_to_node(uin, content))
+                                    nodes.nodes.append(self.content_to_node(uin, content))
 
 
                                 except Exception as e:
@@ -250,64 +250,64 @@ class MyPlugin(Star):
             await self.session.close()
         """可选择实现异步的插件销毁方法，当插件被卸载/停用时会调用。"""
 
-def content_to_node(uin:str, content: [])-> Comp.Node:
-    node = Comp.Node(
-        uin=uin,
-        name="",
-        content=content
-    )
-    return node
+    def content_to_node(self, uin:str, content: [])-> Comp.Node:
+        node = Comp.Node(
+            uin=uin,
+            name="",
+            content=content
+        )
+        return node
 
-def parse_day_from_data(data_string: str) -> str:
-    """从 'data' 字段的字符串中解析出游戏天数"""
-    # 使用正则表达式匹配
-    match = re.search(r"day=(\d+)", data_string)
-    match1 = re.search(r"dayselapsedinseason=(\d+)", data_string)
-    match2 = re.search(r"daysleftinseason=(\d+)", data_string)
-    now_day = int(match.group(1))
-    days_elapsed = int(match1.group(1)) if match1 else 0
-    days_left = int(match2.group(1)) if match2 else 0
-    season_days = days_elapsed + days_left
-    if match:
-        return f"{now_day}/{season_days}"
-    return "未知天数"
+    def parse_day_from_data(self, data_string: str) -> str:
+        """从 'data' 字段的字符串中解析出游戏天数"""
+        # 使用正则表达式匹配
+        match = re.search(r"day=(\d+)", data_string)
+        match1 = re.search(r"dayselapsedinseason=(\d+)", data_string)
+        match2 = re.search(r"daysleftinseason=(\d+)", data_string)
+        now_day = int(match.group(1)) if match else 0
+        days_elapsed = int(match1.group(1)) if match1 else 0
+        days_left = int(match2.group(1)) if match2 else 0
+        season_days = days_elapsed + days_left
+        if match:
+            return f"{now_day}/{season_days}"
+        return "未知天数"
 
-def parse_players_from_string(players_string: str) -> list[str]:
-    """从 'players' 字段的字符串中解析出所有玩家的名字"""
-    # 使用正则表达式匹配所有 "name=" 后面的带引号的字符串
-    # re.findall 会返回所有匹配到的玩家名列表
-    matches = re.findall(r'name="([^"]+)"', players_string)
-    return matches
+    def parse_players_from_string(self, players_string: str) -> list[str]:
+        """从 'players' 字段的字符串中解析出所有玩家的名字"""
+        # 使用正则表达式匹配所有 "name=" 后面的带引号的字符串
+        # re.findall 会返回所有匹配到的玩家名列表
+        matches = re.findall(r'name="([^"]+)"', players_string)
+        return matches
 
 
-def parse_mods_info(mods_enabled: bool, mods_info_list: List[Any]) -> List[str]:
-    """
-    解析 mods_info 列表，只返回模组名称的列表。
+    def parse_mods_info(self, mods_enabled: bool, mods_info_list: List[Any]) -> List[str]:
+        """
+        解析 mods_info 列表，只返回模组名称的列表。
 
-    Args:
-        mods_enabled: 服务器是否启用了模组。
-        mods_info_list: 从服务器获取的扁平化模组信息列表。
+        Args:
+            mods_enabled: 服务器是否启用了模组。
+            mods_info_list: 从服务器获取的扁平化模组信息列表。
 
-    Returns:
-        一个只包含每个模组名称的字符串列表。
-    """
-    if not mods_enabled or not mods_info_list:
-        return []
+        Returns:
+            一个只包含每个模组名称的字符串列表。
+        """
+        if not mods_enabled or not mods_info_list:
+            return []
 
-    parsed_mods = []
-    MOD_INFO_CHUNK_SIZE = 5  # 每个模组信息占5个元素
+        parsed_mods = []
+        MOD_INFO_CHUNK_SIZE = 5  # 每个模组信息占5个元素
 
-    try:
-        for i in range(0, len(mods_info_list), MOD_INFO_CHUNK_SIZE):
-            chunk = mods_info_list[i: i + MOD_INFO_CHUNK_SIZE]
+        try:
+            for i in range(0, len(mods_info_list), MOD_INFO_CHUNK_SIZE):
+                chunk = mods_info_list[i: i + MOD_INFO_CHUNK_SIZE]
 
-            if len(chunk) == MOD_INFO_CHUNK_SIZE:
-                # 【关键改动】我们现在只提取模组名称 (chunk[1])
-                mod_name = chunk[1]
-                parsed_mods.append(mod_name)  # 直接添加模组名称
+                if len(chunk) == MOD_INFO_CHUNK_SIZE:
+                    # 【关键改动】我们现在只提取模组名称 (chunk[1])
+                    mod_name = chunk[1]
+                    parsed_mods.append(mod_name)  # 直接添加模组名称
 
-    except (TypeError, IndexError) as e:
-        print(f"Error parsing mods_info: {e}")
-        return ["模组列表解析失败"]
+        except (TypeError, IndexError) as e:
+            print(f"Error parsing mods_info: {e}")
+            return ["模组列表解析失败"]
 
-    return parsed_mods
+        return parsed_mods
