@@ -43,7 +43,7 @@ class MyPlugin(Star):
 
             @session_waiter(timeout=180, record_history_chains=False)
             async def waiter(controller: SessionController, event: AstrMessageEvent):
-                room_check=event.message_str.split(' ')
+                room_check=event.message_str.split('')
                 message_result = event.make_result()
                 nodes = Comp.Nodes([])
                 uin=event.get_self_id()
