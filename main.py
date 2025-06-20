@@ -15,7 +15,7 @@ from typing import List, Any
     "astrbot_plugin_check-dst-room",
     "EncodedWitcher",
     "提供饥荒服务器大厅查询的插件",
-    "1.1.4")
+    "1.1.5")
 class MyPlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig):
         super().__init__(context)
@@ -225,7 +225,7 @@ class MyPlugin(Star):
                 elif len(room_check)== 1:
                     if room_check[0] == "退出":
                         content=[Comp.Plain("退出查房")]
-                        message_result=content
+                        message_result.chain=content
                         controller.stop()
 
                 message_result.chain=[nodes]
