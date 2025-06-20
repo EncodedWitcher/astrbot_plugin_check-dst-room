@@ -15,7 +15,7 @@ from typing import List, Any
     "astrbot_plugin_check-dst-room",
     "EncodedWitcher",
     "提供饥荒服务器大厅查询的插件",
-    "1.1.1")
+    "1.1.4")
 class MyPlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig):
         super().__init__(context)
@@ -171,7 +171,7 @@ class MyPlugin(Star):
                                     season_map = {
                                         "spring": "春天", "summer": "夏天", "autumn": "秋天", "winter": "冬天"
                                     }
-                                    season = room_info.get('season', '未知')
+                                    season = season_map.get(room_info.get('season', '未知'),'未知')
 
                                     # 3. 房间设置
                                     # 使用三元表达式将布尔值转换为更友好的文本
@@ -189,22 +189,22 @@ class MyPlugin(Star):
 
                                     #6. 直连代码
                                     ip = room_info.get("__addr","未知")
-                                    port = room_info.get("__port","未知")
+                                    port = room_info.get("port","未知")
                                     direct_connect_code = f"c_connect(\"{ip}\",\"{port}\") 启用密码:{has_password}"
 
 
                                     # --- 构建输出 ---
-                                    content=(Comp.Plain(f"🚪 房间名: {room_name}"))
+                                    content=[Comp.Plain(f"房间名: {room_name}")]
                                     nodes.nodes.append(content_to_node(uin, content))
-                                    content=(Comp.Plain(f"👥 人数: {connected_players} / {max_players}"))
+                                    content=[Comp.Plain(f"人数: {connected_players} / {max_players}")]
                                     nodes.nodes.append(content_to_node(uin, content))
-                                    content=(Comp.Plain(f"☀️ 天数: {day_info} ({season_map.get(season, season)})"))
+                                    content=[Comp.Plain(f"天数: {day_info} ({season_map.get(season, season)})")]
                                     nodes.nodes.append(content_to_node(uin,content))
-                                    content=(Comp.Plain(f"👤 在线玩家: {players_str}"))
+                                    content=[Comp.Plain(f"在线玩家: {players_str}")]
                                     nodes.nodes.append(content_to_node(uin,content))
-                                    content=(Comp.Plain(f"🧩 模组列表: {parsed_mods}"))
+                                    content=[Comp.Plain(f"模组列表: {parsed_mods}")]
                                     nodes.nodes.append(content_to_node(uin,content))
-                                    content=(Comp.Plain(f"🔑 直连代码: {direct_connect_code}"))
+                                    content=[Comp.Plain(f"直连代码: {direct_connect_code}")]
                                     nodes.nodes.append(content_to_node(uin, content))
 
 
