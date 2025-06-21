@@ -15,7 +15,7 @@ from typing import List, Any
     "astrbot_plugin_check-dst-room",
     "EncodedWitcher",
     "提供饥荒服务器大厅查询的插件",
-    "1.1.9")
+    "1.2.0")
 class MyPlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig):
         super().__init__(context)
@@ -29,11 +29,9 @@ class MyPlugin(Star):
 
     async def initialize(self):
         self.session = aiohttp.ClientSession()
-        """可选择实现异步的插件初始化方法，当实例化该插件类之后会自动调用该方法。"""
 
     @filter.command("查房")
     async def check_room(self, event: AstrMessageEvent):
-        """查询饥荒服务器大厅"""
         try:
             yield event.plain_result("请输入需要查询的房间关键字\n"+
                                      "可选参数:地区(用空格隔开)\n"+
@@ -41,26 +39,32 @@ class MyPlugin(Star):
                                      "地区列表:ap-east-1(默认),us-east-1,eu-central-1,ap-southeast-1\n"
                                      "输入退出即可退出查询")
 
+            #启用会话管理
             @session_waiter(timeout=180, record_history_chains=False)
             async def waiter(controller: SessionController, event: AstrMessageEvent):
-                room_check=event.message_str.split(' ')
+                room_check=event.message_str.split(' ') #接受的消息
                 message_result = event.make_result()
-                nodes = Comp.Nodes([])
-                uin=event.get_self_id()
+                nodes = Comp.Nodes([]) #合并消息
+                uin=event.get_self_id() #机器人id
                 true_event = True
 
-                if len(room_check)==2 or len(room_check)==3:
-                    check_mode=room_check[0]
-                    room_keyword=room_check[1]
+                if len(room_check)==2 or len(room_check)==3: #长度检测
+                    check_mode=room_check[0] #功能
+                    room_keyword=room_check[1] #关键词
 
-                    if check_mode == "查" :
+                    if len(room_keyword)>6: #关键词长度检测
+                        content = [Comp.Plain(f"关键词长度不超过六")]
+                        message_result.chain = content
+                        await event.send(message_result)
+                        true_event = False
+
+                    elif check_mode == "查" : #按名称查找
                         if len(room_check) == 3:
                             room_region = room_check[2]
                             self.region = room_region
                         else:
                             room_region = self.region_default
 
-                        #room_region = room_check[2] if len(room_check) == 3 else self.region
                         if room_region in self.region_list:
                             url = f"https://lobby-v2-cdn.klei.com/{room_region}-Steam.json.gz"
                             try:
@@ -71,7 +75,7 @@ class MyPlugin(Star):
                                             servers_data = json.loads(compressed_data)
                                             room_list = servers_data.get("GET", [])
                                             self.matched_rooms = []
-                                            for idx, room in enumerate(room_list, 1):
+                                            for idx, room in enumerate(room_list, 1): #将查到的房间添加进self.matched_rooms
                                                 if room_keyword.lower() in room["name"].lower():
                                                     self.matched_rooms.append({
                                                         "id": idx,
@@ -92,11 +96,16 @@ class MyPlugin(Star):
                                             mode_map = {
                                                 "endless": "无尽", "survival": "生存", "wilderness": "荒野", "lightsout": "永夜","relaxed": "休闲"
                                             }
-                                            for room in self.matched_rooms:
-                                                content= [Comp.Plain(f"{room['id']}. {room['name']}"
-                                                                     f"({room['connected']}/{room['maxconnections']})"
-                                                                     f"{season_map.get(room['season'], room['season'])}"
-                                                                     f"({mode_map.get(room['mode'], room['mode'])})")]
+                                            #构建查询信息
+                                            if self.matched_rooms:
+                                                for room in self.matched_rooms:
+                                                    content= [Comp.Plain(f"{room['id']}. {room['name']}"
+                                                                         f"({room['connected']}/{room['maxconnections']})"
+                                                                         f"{season_map.get(room['season'], room['season'])}"
+                                                                         f"({mode_map.get(room['mode'], room['mode'])})")]
+                                                    nodes.nodes.append(self.content_to_node(uin, content))
+                                            else:
+                                                content = [Comp.Plain(f"未找到相关房间")]
                                                 nodes.nodes.append(self.content_to_node(uin, content))
 
                                         except Exception as e:
@@ -114,7 +123,7 @@ class MyPlugin(Star):
                                         true_event = False
                                         controller.stop()
 
-                            except aiohttp.ClientError as e:
+                            except Exception as e:
                                 # 捕获所有可能的网络连接错误
                                 self.region = self.region_default
                                 content = [Comp.Plain(f"无法连接到服务器，请检查网络或稍后再试。错误: {type(e).__name__}查房已退出")]
@@ -122,7 +131,8 @@ class MyPlugin(Star):
                                 await event.send(message_result)
                                 true_event = False
                                 controller.stop()
-                        else:
+
+                        else: #参数不正确
                             content = [Comp.Plain(f"参数错误")]
                             message_result.chain = content
                             await event.send(message_result)
@@ -134,10 +144,9 @@ class MyPlugin(Star):
                             room_id = int(room_check[1])  # 将 room_id 转换为整数
                             room_region = self.region
                             url = f"https://lobby-v2-{room_region}.klei.com/lobby/read"  # post方法
-                            # token="pds-g^KU_XjTVZdYQ^uvwqLfAY/Gim/7vJONmsxtxtrt4lnFJB0B1xVI09Ti8="
                             row_id = next((room['rowId'] for room in self.matched_rooms if room['id'] == room_id), None)
                             payload = {
-                                "__token": "pds-g^KU_XjTVZdYQ^uvwqLfAY/Gim/7vJONmsxtxtrt4lnFJB0B1xVI09Ti8=",
+                                "__token": "pds-g^KU_XjTVZdYQ^uvwqLfAY/Gim/7vJONmsxtxtrt4lnFJB0B1xVI09Ti8=", #饥荒服务器令牌,可以自己申请
                                 "__gameID": "DST",
                                 "query": {
                                     "__rowId": f"{row_id}"
@@ -217,7 +226,7 @@ class MyPlugin(Star):
                                         true_event = False
                                         controller.stop()
 
-                            except aiohttp.ClientError as e:
+                            except Exception as e:
                                 # 捕获所有可能的网络连接错误
                                 self.region = self.region_default
                                 content = [Comp.Plain(
@@ -239,7 +248,7 @@ class MyPlugin(Star):
                 elif len(room_check)== 1:
                     if room_check[0] == "退出":
                         self.region = self.region_default
-                        content=[Comp.Plain("退出查房")]
+                        content=[Comp.Plain("查房已退出")]
                         message_result.chain=content
                         await event.send(message_result)
                         controller.stop()
@@ -254,8 +263,6 @@ class MyPlugin(Star):
                     await event.send(message_result)
 
                 controller.keep(timeout=180, reset_timeout=True)
-
-
 
             try:
                 await waiter(event)
@@ -284,7 +291,6 @@ class MyPlugin(Star):
 
     def parse_day_from_data(self, data_string: str) -> str:
         """从 'data' 字段的字符串中解析出游戏天数"""
-        # 使用正则表达式匹配
         match = re.search(r"day=(\d+)", data_string)
         match1 = re.search(r"dayselapsedinseason=(\d+)", data_string)
         match2 = re.search(r"daysleftinseason=(\d+)", data_string)
@@ -293,7 +299,7 @@ class MyPlugin(Star):
         days_left = int(match2.group(1)) if match2 else 0
         season_days = days_elapsed + days_left
         if match:
-            return f"总天数:{now_day} \n当前季节:{days_elapsed}/{season_days}"
+            return f"\n总天数{now_day} \n当前季节:{days_elapsed}/{season_days}"
         return "未知天数"
 
     def parse_players_from_string(self, players_string: str) -> list[str]:
@@ -305,16 +311,7 @@ class MyPlugin(Star):
 
 
     def parse_mods_info(self, mods_enabled: bool, mods_info_list: List[Any]) -> List[str]:
-        """
-        解析 mods_info 列表，只返回模组名称的列表。
-
-        Args:
-            mods_enabled: 服务器是否启用了模组。
-            mods_info_list: 从服务器获取的扁平化模组信息列表。
-
-        Returns:
-            一个只包含每个模组名称的字符串列表。
-        """
+        #解析模组列表
         if not mods_enabled or not mods_info_list:
             return []
 
@@ -326,12 +323,10 @@ class MyPlugin(Star):
                 chunk = mods_info_list[i: i + MOD_INFO_CHUNK_SIZE]
 
                 if len(chunk) == MOD_INFO_CHUNK_SIZE:
-                    # 【关键改动】我们现在只提取模组名称 (chunk[1])
                     mod_name = chunk[1]
                     parsed_mods.append(mod_name)  # 直接添加模组名称
 
         except (TypeError, IndexError) as e:
-            print(f"Error parsing mods_info: {e}")
             return ["模组列表解析失败"]
 
         return parsed_mods
