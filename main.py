@@ -11,7 +11,6 @@ import json
 import re
 from typing import List, Any
 
-
 @register(
     "astrbot_plugin_check-dst-room",
     "EncodedWitcher",
@@ -22,9 +21,9 @@ class MyPlugin(Star):
         super().__init__(context)
         self.config = config
         self.session: aiohttp.ClientSession | None = None
-        self.region_default = self.config.get("region", "default")
+        self.region_default = self.config.get("region","default")
         self.region = self.region_default
-        self.region_list = ["us-east-1", "eu-central-1", "ap-southeast-1", "ap-east-1"]
+        self.region_list=["us-east-1","eu-central-1","ap-southeast-1","ap-east-1"]
         self.platform = "Steam"
         self.matched_rooms = []
 
@@ -36,30 +35,31 @@ class MyPlugin(Star):
     async def check_room(self, event: AstrMessageEvent):
         """查询饥荒服务器大厅"""
         try:
-            yield event.plain_result("请输入需要查询的房间关键字\n" +
-                                     "可选参数:地区(用空格隔开)\n" +
-                                     "如:查 111 ap-east-1\n" +
+            yield event.plain_result("请输入需要查询的房间关键字\n"+
+                                     "可选参数:地区(用空格隔开)\n"+
+                                     "如:查 111 ap-east-1\n"+
                                      "地区列表:ap-east-1(默认),us-east-1,eu-central-1,ap-southeast-1\n"
                                      "输入退出即可退出查询")
 
             @session_waiter(timeout=180, record_history_chains=False)
             async def waiter(controller: SessionController, event: AstrMessageEvent):
-                room_check = event.message_str.split(' ')
+                room_check=event.message_str.split(' ')
                 message_result = event.make_result()
                 nodes = Comp.Nodes([])
-                uin = event.get_self_id()
+                uin=event.get_self_id()
 
-                if len(room_check) == 2 or len(room_check) == 3:
-                    check_mode = room_check[0]
-                    room_keyword = room_check[1]
+                if len(room_check)==2 or len(room_check)==3:
+                    check_mode=room_check[0]
+                    room_keyword=room_check[1]
 
-                    if check_mode == "查":
+                    if check_mode == "查" :
                         if len(room_check) == 3:
                             room_region = room_check[2]
                             self.region = room_region
                         else:
                             room_region = self.region_default
-                        # room_region = room_check[2] if len(room_check) == 3 else self.region
+
+                        #room_region = room_check[2] if len(room_check) == 3 else self.region
                         if room_region in self.region_list:
                             url = f"https://lobby-v2-cdn.klei.com/{room_region}-Steam.json.gz"
                             try:
@@ -81,22 +81,21 @@ class MyPlugin(Star):
                                                         "season": room["season"],
                                                         "mode": room["intent"]
                                                     })
-                                            content = [Comp.Plain(f"输入详情+编号查看详情")]
-                                            nodes.nodes.append(self.content_to_node(uin, content))
-                                            content = [Comp.Plain(f"如:详情 1")]
+                                            content=[Comp.Plain(f"输入详情+编号查看详情")]
+                                            nodes.nodes.append(self.content_to_node(uin,content))
+                                            content=[Comp.Plain(f"如:详情 1")]
                                             nodes.nodes.append(self.content_to_node(uin, content))
                                             season_map = {
                                                 "spring": "春天", "summer": "夏天", "autumn": "秋天", "winter": "冬天"
                                             }
                                             mode_map = {
-                                                "endless": "无尽", "survival": "生存", "wilderness": "荒野",
-                                                "lightsout": "永夜", "relaxed": "休闲"
+                                                "endless": "无尽", "survival": "生存", "wilderness": "荒野", "lightsout": "永夜","relaxed": "休闲"
                                             }
                                             for room in self.matched_rooms:
-                                                content = [Comp.Plain(f"{room['id']}. {room['name']}"
-                                                                      f"({room['connected']}/{room['maxconnections']})"
-                                                                      f"{season_map.get(room['season'], room['season'])}"
-                                                                      f"({mode_map.get(room['mode'], room['mode'])})")]
+                                                content= [Comp.Plain(f"{room['id']}. {room['name']}"
+                                                                     f"({room['connected']}/{room['maxconnections']})"
+                                                                     f"{season_map.get(room['season'], room['season'])}"
+                                                                     f"({mode_map.get(room['mode'], room['mode'])})")]
                                                 nodes.nodes.append(self.content_to_node(uin, content))
 
                                         except Exception as e:
@@ -107,8 +106,7 @@ class MyPlugin(Star):
                                             controller.stop()
                                     else:
                                         self.region = self.region_default
-                                        content = [
-                                            Comp.Plain(f"获取服务器列表失败，状态码: {response.status}查房已退出")]
+                                        content=[Comp.Plain(f"获取服务器列表失败，状态码: {response.status}查房已退出")]
                                         message_result.chain = content
                                         await event.send(message_result)
                                         controller.stop()
@@ -116,8 +114,7 @@ class MyPlugin(Star):
                             except aiohttp.ClientError as e:
                                 # 捕获所有可能的网络连接错误
                                 self.region = self.region_default
-                                content = [Comp.Plain(
-                                    f"无法连接到服务器，请检查网络或稍后再试。错误: {type(e).__name__}查房已退出")]
+                                content = [Comp.Plain(f"无法连接到服务器，请检查网络或稍后再试。错误: {type(e).__name__}查房已退出")]
                                 message_result.chain = content
                                 await event.send(message_result)
                                 controller.stop()
@@ -127,7 +124,7 @@ class MyPlugin(Star):
                             await event.send(message_result)
                             controller.keep(timeout=180, reset_timeout=False)
 
-                    elif check_mode == "详情":
+                    elif check_mode == "详情" :
                         try:
                             room_id = int(room_check[1])  # 将 room_id 转换为整数
                         except ValueError:
@@ -136,8 +133,8 @@ class MyPlugin(Star):
                             controller.keep(timeout=180, reset_timeout=False)
 
                         room_region = self.region
-                        url = f"https://lobby-v2-{room_region}.klei.com/lobby/read"  # post方法
-                        # token="pds-g^KU_XjTVZdYQ^uvwqLfAY/Gim/7vJONmsxtxtrt4lnFJB0B1xVI09Ti8="
+                        url=f"https://lobby-v2-{room_region}.klei.com/lobby/read" #post方法
+                        #token="pds-g^KU_XjTVZdYQ^uvwqLfAY/Gim/7vJONmsxtxtrt4lnFJB0B1xVI09Ti8="
                         row_id = next((room['rowId'] for room in self.matched_rooms if room['id'] == room_id), None)
                         payload = {
                             "__token": "pds-g^KU_XjTVZdYQ^uvwqLfAY/Gim/7vJONmsxtxtrt4lnFJB0B1xVI09Ti8=",
@@ -154,7 +151,7 @@ class MyPlugin(Star):
                                         room_data = await response.json()
                                         # 安全地检查 "GET" 列表是否为空
                                         if not room_data.get("GET"):
-                                            content = [(Comp.Plain(f"错误：服务器返回的数据中没有房间信息。查房已退出"))]
+                                            content=[(Comp.Plain(f"错误：服务器返回的数据中没有房间信息。查房已退出"))]
                                             message_result.chain = content
                                             await event.send(message_result)
                                             controller.stop()
@@ -171,7 +168,7 @@ class MyPlugin(Star):
                                         season_map = {
                                             "spring": "春天", "summer": "夏天", "autumn": "秋天", "winter": "冬天"
                                         }
-                                        season = season_map.get(room_info.get('season', '未知'), '未知')
+                                        season = season_map.get(room_info.get('season', '未知'),'未知')
                                         # 3. 房间设置
                                         # 使用三元表达式将布尔值转换为更友好的文本
                                         has_password = "是" if room_info.get('password', False) else "否"
@@ -183,65 +180,67 @@ class MyPlugin(Star):
                                         mods_enabled = room_info.get('mods', False)
                                         mods_info_list = room_info.get('mods_info', [])
                                         parsed_mods = self.parse_mods_info(mods_enabled, mods_info_list)
-                                        # 6. 直连代码
-                                        ip = room_info.get("__addr", "未知")
-                                        port = room_info.get("port", "未知")
+                                        #6. 直连代码
+                                        ip = room_info.get("__addr","未知")
+                                        port = room_info.get("port","未知")
                                         direct_connect_code = f"c_connect(\"{ip}\",\"{port}\")\n启用密码:{has_password}"
                                         # --- 构建输出 ---
-                                        content = [Comp.Plain(f"房间名: {room_name}")]
+                                        content=[Comp.Plain(f"房间名: {room_name}")]
                                         nodes.nodes.append(self.content_to_node(uin, content))
-                                        content = [Comp.Plain(f"人数: {connected_players} / {max_players}")]
+                                        content=[Comp.Plain(f"人数: {connected_players} / {max_players}")]
                                         nodes.nodes.append(self.content_to_node(uin, content))
-                                        content = [Comp.Plain(f"天数: {day_info} ({season_map.get(season, season)})")]
-                                        nodes.nodes.append(self.content_to_node(uin, content))
-                                        content = [Comp.Plain(f"在线玩家: {players_str}")]
-                                        nodes.nodes.append(self.content_to_node(uin, content))
-                                        content = [Comp.Plain(f"模组列表: {parsed_mods}")]
-                                        nodes.nodes.append(self.content_to_node(uin, content))
-                                        content = [Comp.Plain(f"直连代码: {direct_connect_code}")]
+                                        content=[Comp.Plain(f"天数: {day_info} ({season_map.get(season, season)})")]
+                                        nodes.nodes.append(self.content_to_node(uin,content))
+                                        content=[Comp.Plain(f"在线玩家: {players_str}")]
+                                        nodes.nodes.append(self.content_to_node(uin,content))
+                                        content=[Comp.Plain(f"模组列表: {parsed_mods}")]
+                                        nodes.nodes.append(self.content_to_node(uin,content))
+                                        content=[Comp.Plain(f"直连代码: {direct_connect_code}")]
                                         nodes.nodes.append(self.content_to_node(uin, content))
                                     except Exception as e:
                                         # 捕获可能的JSON解析错误或其他异常
                                         self.region = self.region_default
-                                        content = [(Comp.Plain(f"处理房间数据时出错: {e}查房已退出"))]
+                                        content=[(Comp.Plain(f"处理房间数据时出错: {e}查房已退出"))]
                                         message_result.chain = content
                                         await event.send(message_result)
                                         controller.stop()
                                 else:
                                     # 处理请求失败的情况
-                                    content = [(Comp.Plain(
-                                        f"查询失败，服务器状态码: {response.status},row_id={row_id}查房已退出"))]
+                                    content=[(Comp.Plain(f"查询失败，服务器状态码: {response.status},row_id={row_id}查房已退出"))]
                                     message_result.chain = content
                                     await event.send(message_result)
                                     controller.stop()
 
                         except aiohttp.ClientError as e:
-                            # 捕获所有可能的网络连接错误
+                        # 捕获所有可能的网络连接错误
                             self.region = self.region_default
-                            content = [
-                                Comp.Plain(f"无法连接到服务器，请检查网络或稍后再试。错误: {type(e).__name__}查房已退出")]
+                            content = [Comp.Plain(f"无法连接到服务器，请检查网络或稍后再试。错误: {type(e).__name__}查房已退出")]
                             message_result.chain = content
                             await event.send(message_result)
                             controller.stop()
 
-                    else:  # 不是详情也不是查房
+                    else: #不是详情也不是查房
+                        message_result.chain = [Comp.Plain("")]
                         controller.keep(timeout=180, reset_timeout=False)
 
-                elif len(room_check) == 1:
+                elif len(room_check)== 1:
                     if room_check[0] == "退出":
                         self.region = self.region_default
-                        content = [Comp.Plain("退出查房")]
-                        message_result.chain = content
+                        content=[Comp.Plain("退出查房")]
+                        message_result.chain=content
+                        await event.send(message_result)
                         controller.stop()
-                    else:  # 并非退出
+                    else: #并非退出
+                        message_result.chain = [Comp.Plain("")]
                         controller.keep(timeout=180, reset_timeout=False)
-                else:  # 参数数量不对
+                else: #参数数量不对
+                    message_result.chain=[Comp.Plain("")]
                     controller.keep(timeout=180, reset_timeout=False)
 
-                message_result.chain = [nodes]
+                message_result.chain=[nodes]
                 await event.send(message_result)
                 controller.keep(timeout=180, reset_timeout=True)
-                # controller.stop()
+                #controller.stop()
 
             try:
                 await waiter(event)
@@ -260,7 +259,7 @@ class MyPlugin(Star):
             await self.session.close()
         """可选择实现异步的插件销毁方法，当插件被卸载/停用时会调用。"""
 
-    def content_to_node(self, uin: str, content: []) -> Comp.Node:
+    def content_to_node(self, uin:str, content: [])-> Comp.Node:
         node = Comp.Node(
             uin=uin,
             name="",
@@ -288,6 +287,7 @@ class MyPlugin(Star):
         # re.findall 会返回所有匹配到的玩家名列表
         matches = re.findall(r'name="([^"]+)"', players_string)
         return matches
+
 
     def parse_mods_info(self, mods_enabled: bool, mods_info_list: List[Any]) -> List[str]:
         """

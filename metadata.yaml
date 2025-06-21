@@ -1,5 +1,5 @@
-name: astrbot_plugin_check-dst-room # 这是你的插件的唯一识别名。
-desc: 提供饥荒服务器大厅查询的插件。 # 插件简短描述
-version: v1.1.8 # 插件版本号。格式：v1.1.1 或者 v1.1
-author: EncodedWitcher # 作者
-repo: https://github.com/EncodedWitcher/astrbot_plugin_check-dst-room # 插件的仓库地址
+name: astrbot_plugin_check-dst-room
+desc: 提供饥荒服务器大厅查询的插件
+version: v1.1.8
+author: EncodedWitcher
+repo: https://github.com/EncodedWitcher/astrbot_plugin_check-dst-room
